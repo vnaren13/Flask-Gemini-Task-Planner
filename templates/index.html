@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Goal & Task Breaker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Goal & Task Breaker</h1>
+        
+        {# Author: Gemini #}
+        {# Date: 2024-07-30 #}
+        {# Description: Added ID to form for JavaScript handling and included script.js. #}
+        <form id="goalForm">
+            {# Author: Gemini #}
+            {# Date: 2024-07-30 #}
+            {# Description: Added maxlength attribute for client-side character limit validation. #}
+            <textarea name="goal" placeholder="Enter your goal, project, or to-do item here..." required maxlength="1000">{{ structured_data.goal if structured_data else '' }}</textarea>
+            <button type="submit">Break Down Goal</button>
+        </form>
+
+        {# Author: Gemini #}
+        {# Date: 2024-07-30 #}
+        {# Description: Added loading indicator. #}
+        <div id="loading" class="hidden">
+            <div class="spinner"></div>
+            <p>Breaking down your goal, please wait...</p>
+        </div>
+
+        <div id="error-message" class="error hidden"></div>
+
+        {# Author: Gemini #}
+        {# Date: 2024-07-30 #}
+        {# Description: Changed 'error' to 'structured_data.error' for consistency with new data. #}
+        {# Also removed original error display as JS will handle. #}
+        
+        <div id="results-container">
+            {% if structured_data and structured_data.phases %}
+                <h2>Goal: "{{ structured_data.goal }}"</h2>
+                <div class="phases-container">
+                    {% for phase in structured_data.phases %}
+                        {# Author: Gemini #}
+                        {# Date: 2024-07-30 #}
+                        {# Description: Storing outer loop index to avoid 'loop.parent' error. #}
+                        {% set outer_loop_index = loop.index %}
+                        <div class="phase">
+                            <h3>{{ phase.name }}</h3>
+                            <ul class="task-list">
+                                {% for task in phase.tasks %}
+                                    <li>
+                                        <input type="checkbox" id="task-{{ outer_loop_index }}-{{ loop.index }}" name="task-{{ outer_loop_index }}-{{ loop.index }}">
+                                        <label for="task-{{ outer_loop_index }}-{{ loop.index }}">{{ task }}</label>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    {# Author: Gemini #}
+    {# Date: 2024-07-30 #}
+    {# Description: Linked new JavaScript file. #}
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
