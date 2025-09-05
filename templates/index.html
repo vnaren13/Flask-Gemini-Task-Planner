@@ -3,67 +3,654 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Goal & Task Breaker</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Gemini Task Planner</title>
+    <style>
+        /* General Styling */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+        
+        :root {
+            --primary-color: #00BFFF; 
+            --secondary-color: #7FFF00; 
+            --accent-color: #FF8C00; 
+            --background-start: #E0FFFF; 
+            --background-end: #F0F8FF;
+            --card-color: #FFFFFF;
+            --text-color: #333333;
+            --subtle-text: #666666;
+            --border-color: #E0E0E0;
+            --shadow-light: 0 4px 15px rgba(0, 0, 0, 0.05);
+            --shadow-medium: 0 10px 30px rgba(0, 0, 0, 0.1);
+            --success-color: #4CAF50;
+            --error-color: #F44336;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-image: linear-gradient(135deg, var(--background-start), var(--background-end));
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .container {
+            background-color: var(--card-color);
+            padding: 40px 50px;
+            border-radius: 20px;
+            box-shadow: var(--shadow-medium);
+            width: 100%;
+            max-width: 900px;
+            margin-top: 50px;
+            border: 1px solid var(--border-color);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 40px;
+            font-size: 2.8em;
+            font-weight: 700;
+            letter-spacing: -1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        h1 svg {
+            width: 45px;
+            height: 45px;
+            fill: var(--primary-color);
+        }
+
+        h2 {
+            font-family: 'Montserrat', sans-serif;
+            color: var(--primary-color);
+            margin-top: 30px;
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 15px;
+            font-size: 2em;
+            font-weight: 600;
+        }
+
+        h3 {
+            font-family: 'Montserrat', sans-serif;
+            color: var(--subtle-text);
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+            font-weight: 500;
+            border-bottom: 1px dashed var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        /* Form Styling */
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 1.1em;
+            min-height: 150px;
+            resize: vertical;
+            box-sizing: border-box;
+            background-color: var(--background-end);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            font-family: inherit;
+        }
+
+        textarea:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(0, 191, 255, 0.1);
+        }
+        
+        button[type="submit"] {
+            padding: 18px 30px;
+            background-image: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1.2em;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            box-shadow: 0 5px 20px rgba(0, 191, 255, 0.3);
+            transition: transform 0.2s ease, box-shadow 0.3s ease;
+        }
+
+        button[type="submit"]:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 191, 255, 0.4);
+        }
+
+        /* Options Container (Dropdowns) */
+        .options-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            background-color: var(--background-end);
+            border-radius: 15px;
+            border: 1px solid var(--border-color);
+        }
+
+        .option-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .option-group label {
+            font-weight: 600;
+            color: var(--text-color);
+            font-size: 1em;
+        }
+
+        .options-container select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 1em;
+            background-color: var(--card-color);
+            color: var(--text-color);
+            cursor: pointer;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            font-family: inherit;
+        }
+
+        .options-container select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 191, 255, 0.1);
+        }
+
+        
+        .error {
+            color: var(--error-color);
+            text-align: center;
+            margin-bottom: 25px;
+            font-weight: 500;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        #loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 30px;
+            font-size: 1.2em;
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 191, 255, 0.2);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
+            margin-bottom: 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Results Display */
+        .phases-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .phase {
+            background-color: var(--background-end);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: var(--shadow-light);
+            transition: transform 0.2s ease, box-shadow 0.3s ease;
+        }
+        
+        .phase:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .task-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+
+        .task-list li {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            background-color: var(--card-color);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: background-color 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+        }
+
+        .task-list li:hover {
+            background-color: var(--background-start);
+        }
+        
+        .task-list li:last-child {
+            margin-bottom: 0;
+        }
+
+        .task-list li input[type="checkbox"] {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-color: var(--card-color);
+            margin-top: 5px;
+            margin-right: 15px;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--primary-color);
+            border-radius: 6px;
+            cursor: pointer;
+            position: relative;
+            transition: background-color 0.2s ease;
+        }
+
+        .task-list li input[type="checkbox"]:checked {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .task-list li input[type="checkbox"]:checked::after {
+            content: '✔';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--card-color);
+            font-size: 14px;
+        }
+
+        .task-list li label {
+            cursor: pointer;
+            flex-grow: 1;
+            line-height: 1.5;
+            transition: color 0.2s ease;
+        }
+
+        .task-list li input[type="checkbox"]:checked + label {
+            text-decoration: line-through;
+            color: var(--subtle-text);
+        }
+
+        /* Action Buttons */
+        #tryAgainBtn, .action-btn {
+            margin-top: 25px;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: transform 0.2s ease, box-shadow 0.3s ease;
+            display: block; 
+            margin-left: auto;
+            margin-right: auto;
+            width: fit-content;
+            min-width: 200px;
+            box-shadow: var(--shadow-light);
+        }
+
+        #tryAgainBtn {
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+        }
+
+        #tryAgainBtn:hover {
+            background-color: #6CD200;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(127, 255, 0, 0.4);
+        }
+
+        #copyToClipboardBtn {
+            background-color: var(--accent-color);
+            color: white;
+            margin-top: 15px;
+        }
+
+        #copyToClipboardBtn:hover {
+            background-color: #E67E22;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(255, 140, 0, 0.4);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <h1>Goal & Task Breaker</h1>
+        <h1>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-2-15v2h4V5h-4zm0 4v2h4V9h-4zm0 4v2h4v-2h-4zm0 4v2h4v-2h-4z"/>
+            </svg>
+            Gemini Task Planner
+        </h1>
         
-        {# Author: Gemini #}
-        {# Date: 2024-07-30 #}
-        {# Description: Added ID to form for JavaScript handling and included script.js. #}
         <form id="goalForm">
-            {# Author: Gemini #}
-            {# Date: 2024-07-30 #}
-            {# Description: Added maxlength attribute for client-side character limit validation. #}
-            <textarea name="goal" placeholder="Enter your goal, project, or to-do item here..." required maxlength="1000">{{ structured_data.goal if structured_data else '' }}</textarea>
+            <textarea name="goal" placeholder="Enter your goal, project, or to-do item here..." required maxlength="1000"></textarea>
+            
+            <div class="options-container">
+                <div class="option-group">
+                    <label for="toneSelect">Tone:</label>
+                    <select id="toneSelect" name="tone">
+                        <option value="none">None</option>
+                        <option value="neutral">Neutral</option>
+                        <option value="professional">Professional</option>
+                        <option value="casual">Casual</option>
+                        <option value="motivational">Motivational</option>
+                        <option value="minimalist">Minimalist</option>
+                    </select>
+                </div>
+                <div class="option-group">
+                    <label for="detailSelect">Detail Level:</label>
+                    <select id="detailSelect" name="level_of_detail">
+                        <option value="none">None</option>
+                        <option value="medium">Medium detail</option>
+                        <option value="high-level">High-level only</option>
+                        <option value="step-by-step">Step-by-step</option>
+                    </select>
+                </div>
+                <div class="option-group">
+                    <label for="prioritySelect">Priority Style:</label>
+                    <select id="prioritySelect" name="priority_style">
+                        <option value="none">None</option>
+                        <option value="chronological">Chronological order</option>
+                        <option value="urgency-based">Urgency-based</option>
+                        <option value="eisenhower">Eisenhower Matrix</option>
+                    </select>
+                </div>
+                <div class="option-group">
+                    <label for="timeSelect">Time Sensitivity:</label>
+                    <select id="timeSelect" name="time_sensitivity">
+                        <option value="none">None</option>
+                        <option value="quick_plan">Quick Plan</option>
+                        <option value="weekly_plan">Weekly Plan</option>
+                        <option value="long-term">Long-term</option>
+                    </select>
+                </div>
+            </div>
+            
             <button type="submit">Break Down Goal</button>
         </form>
 
-        {# Author: Gemini #}
-        {# Date: 2024-07-30 #}
-        {# Description: Added loading indicator. #}
         <div id="loading" class="hidden">
             <div class="spinner"></div>
             <p>Breaking down your goal, please wait...</p>
         </div>
 
         <div id="error-message" class="error hidden"></div>
-
-        {# Author: Gemini #}
-        {# Date: 2024-07-30 #}
-        {# Description: Changed 'error' to 'structured_data.error' for consistency with new data. #}
-        {# Also removed original error display as JS will handle. #}
         
         <div id="results-container">
-            {% if structured_data and structured_data.phases %}
-                <h2>Goal: "{{ structured_data.goal }}"</h2>
-                <div class="phases-container">
-                    {% for phase in structured_data.phases %}
-                        {# Author: Gemini #}
-                        {# Date: 2024-07-30 #}
-                        {# Description: Storing outer loop index to avoid 'loop.parent' error. #}
-                        {% set outer_loop_index = loop.index %}
-                        <div class="phase">
-                            <h3>{{ phase.name }}</h3>
-                            <ul class="task-list">
-                                {% for task in phase.tasks %}
-                                    <li>
-                                        <input type="checkbox" id="task-{{ outer_loop_index }}-{{ loop.index }}" name="task-{{ outer_loop_index }}-{{ loop.index }}">
-                                        <label for="task-{{ outer_loop_index }}-{{ loop.index }}">{{ task }}</label>
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% endif %}
         </div>
+        
+        <button id="tryAgainBtn" class="hidden">Try Again with Same Goal</button>
+        <button id="copyToClipboardBtn" class="action-btn hidden">Copy to Clipboard</button>
     </div>
-    {# Author: Gemini #}
-    {# Date: 2024-07-30 #}
-    {# Description: Linked new JavaScript file. #}
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    
+    <script>
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const goalForm = document.getElementById('goalForm');
+            const goalTextarea = goalForm.querySelector('textarea[name="goal"]');
+            const loadingDiv = document.getElementById('loading');
+            const errorMessageDiv = document.getElementById('error-message');
+            const resultsContainer = document.getElementById('results-container');
+
+            const tryAgainBtn = document.getElementById('tryAgainBtn');
+            let lastProcessedGoal = "";
+
+            const copyToClipboardBtn = document.getElementById('copyToClipboardBtn');
+            let lastStructuredData = null;
+
+            const toneSelect = document.getElementById('toneSelect');
+            const detailSelect = document.getElementById('detailSelect');
+            const prioritySelect = document.getElementById('prioritySelect');
+            const timeSelect = document.getElementById('timeSelect');
+
+            loadingDiv.classList.add('hidden');
+            errorMessageDiv.classList.add('hidden');
+            tryAgainBtn.classList.add('hidden');
+            copyToClipboardBtn.classList.add('hidden');
+
+            goalForm.addEventListener('submit', async function(event) {
+                event.preventDefault();
+
+                errorMessageDiv.classList.add('hidden');
+                resultsContainer.innerHTML = '';
+                loadingDiv.classList.remove('hidden');
+                tryAgainBtn.classList.add('hidden');
+                copyToClipboardBtn.classList.add('hidden');
+
+                const goal = goalTextarea.value;
+                lastProcessedGoal = goal;
+
+                const tone = toneSelect.value;
+                const level_of_detail = detailSelect.value;
+                const priority_style = prioritySelect.value;
+                const time_sensitivity = timeSelect.value;
+
+                const formData = new URLSearchParams();
+                formData.append('goal', goal);
+                formData.append('tone', tone);
+                formData.append('level_of_detail', level_of_detail);
+                formData.append('priority_style', priority_style);
+                formData.append('time_sensitivity', time_sensitivity);
+
+                try {
+                    const response = await fetch('/break_down_goal', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: formData.toString()
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || `HTTP error! status: ${response.status}`);
+                    }
+
+                    lastStructuredData = data;
+                    renderStructuredData(data);
+                    tryAgainBtn.classList.remove('hidden');
+                    copyToClipboardBtn.classList.remove('hidden');
+
+                } catch (error) {
+                    errorMessageDiv.textContent = `An error occurred: ${error.message}`;
+                    errorMessageDiv.classList.remove('hidden');
+                    console.error('Fetch error:', error);
+                    tryAgainBtn.classList.add('hidden');
+                    copyToClipboardBtn.classList.add('hidden');
+                } finally {
+                    loadingDiv.classList.add('hidden');
+                }
+            });
+
+            tryAgainBtn.addEventListener('click', async function() {
+                if (lastProcessedGoal) {
+                    errorMessageDiv.classList.add('hidden');
+                    resultsContainer.innerHTML = '';
+                    loadingDiv.classList.remove('hidden');
+                    tryAgainBtn.classList.add('hidden');
+                    copyToClipboardBtn.classList.add('hidden');
+
+                    const tone = toneSelect.value;
+                    const level_of_detail = detailSelect.value;
+                    const priority_style = prioritySelect.value;
+                    const time_sensitivity = timeSelect.value;
+
+                    const formData = new URLSearchParams();
+                    formData.append('goal', lastProcessedGoal);
+                    formData.append('tone', tone);
+                    formData.append('level_of_detail', level_of_detail);
+                    formData.append('priority_style', priority_style);
+                    formData.append('time_sensitivity', time_sensitivity);
+
+                    try {
+                        const response = await fetch('/break_down_goal', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            body: formData.toString()
+                        });
+
+                        const data = await response.json();
+
+                        if (!response.ok) {
+                            throw new Error(data.error || `HTTP error! status: ${response.status}`);
+                        }
+
+                        lastStructuredData = data;
+                        renderStructuredData(data);
+                        tryAgainBtn.classList.remove('hidden');
+                        copyToClipboardBtn.classList.remove('hidden');
+                    } catch (error) {
+                        errorMessageDiv.textContent = `An error occurred during 'Try Again': ${error.message}`;
+                        errorMessageDiv.classList.remove('hidden');
+                        console.error('Try Again fetch error:', error);
+                        tryAgainBtn.classList.add('hidden');
+                        copyToClipboardBtn.classList.add('hidden');
+                    } finally {
+                        loadingDiv.classList.add('hidden');
+                    }
+                }
+            });
+
+            copyToClipboardBtn.addEventListener('click', function() {
+                if (lastStructuredData) {
+                    const textToCopy = formatStructuredDataAsText(lastStructuredData);
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        const tempMessage = document.createElement('div');
+                        tempMessage.textContent = 'Text list copied to clipboard!';
+                        tempMessage.style.cssText = `
+                            position: fixed;
+                            top: 50%;
+                            left: 50%;
+                            transform: translate(-50%, -50%);
+                            background-color: var(--success-color);
+                            color: white;
+                            padding: 15px 30px;
+                            border-radius: 10px;
+                            font-size: 1.1em;
+                            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+                            z-index: 1000;
+                            transition: opacity 0.5s ease-in-out;
+                        `;
+                        document.body.appendChild(tempMessage);
+                        setTimeout(() => {
+                            tempMessage.style.opacity = '0';
+                            setTimeout(() => tempMessage.remove(), 500);
+                        }, 1500);
+                    }).catch(err => {
+                        console.error('Failed to copy text:', err);
+                        const tempMessage = document.createElement('div');
+                        tempMessage.textContent = 'Failed to copy text to clipboard.';
+                        tempMessage.style.cssText = `
+                            position: fixed;
+                            top: 50%;
+                            left: 50%;
+                            transform: translate(-50%, -50%);
+                            background-color: var(--error-color);
+                            color: white;
+                            padding: 15px 30px;
+                            border-radius: 10px;
+                            font-size: 1.1em;
+                            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+                            z-index: 1000;
+                            transition: opacity 0.5s ease-in-out;
+                        `;
+                        document.body.appendChild(tempMessage);
+                        setTimeout(() => {
+                            tempMessage.style.opacity = '0';
+                            setTimeout(() => tempMessage.remove(), 500);
+                        }, 1500);
+                    });
+                } else {
+                    alert('No goal breakdown available to copy.');
+                }
+            });
+
+            function formatStructuredDataAsText(data) {
+                let text = `Goal: ${data.goal}\n\n`;
+                data.phases.forEach(phase => {
+                    text += `--- ${phase.name} ---\n`;
+                    phase.tasks.forEach((task, index) => {
+                        text += `${index + 1}. ${task}\n`;
+                    });
+                    text += '\n';
+                });
+                return text;
+            }
+
+            function renderStructuredData(structured_data) {
+                if (!structured_data || !structured_data.phases || structured_data.phases.length === 0) {
+                    errorMessageDiv.textContent = "Could not break down your goal into phases. It might be too simple, or an unexpected format was returned.";
+                    errorMessageDiv.classList.remove('hidden');
+                    tryAgainBtn.classList.add('hidden');
+                    copyToClipboardBtn.classList.add('hidden');
+                    return;
+                }
+
+                let html = `<h2>Goal: "${structured_data.goal}"</h2>`;
+                html += `<div class="phases-container">`;
+
+                structured_data.phases.forEach((phase, phaseIndex) => {
+                    html += `<div class="phase">`;
+                    html += `<h3>${phase.name}</h3>`;
+                    html += `<ul class="task-list">`;
+                    phase.tasks.forEach((task, taskIndex) => {
+                        const uniqueId = `task-${phaseIndex + 1}-${taskIndex + 1}`;
+                        html += `<li>
+                                    <input type="checkbox" id="${uniqueId}" name="${uniqueId}">
+                                    <label for="${uniqueId}">${task}</label>
+                                </li>`;
+                    });
+                    html += `</ul>`;
+                    html += `</div>`;
+                });
+                html += `</div>`;
+
+                resultsContainer.innerHTML = html;
+            }
+        });
+    </script>
 </body>
 </html>

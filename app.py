@@ -12,25 +12,27 @@ app = Flask(__name__)
 genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
 
 @app.route('/')
-def index():
-   
+def index(): 
     return render_template('index.html', structured_data=None)
 
 @app.route('/break_down_goal', methods=['POST'])
 def break_down_goal():
     goal = request.form['goal']
     
-    # Author: Gemini
-    # Date: 2024-07-30
-    # Description: Trim whitespace and check for empty goal after trimming to handle whitespace-only inputs.
+    # Retrieve new dropdown selections from the form.
+    tone = request.form.get('tone', 'neutral')
+    level_of_detail = request.form.get('level_of_detail', 'medium')
+    priority_style = request.form.get('priority_style', 'chronological')
+    time_sensitivity = request.form.get('time_sensitivity', 'none')
+
+    # Trim whitespace and check for empty goal after trimming to handle whitespace-only inputs.
     goal = goal.strip() 
     if not goal:
         
         return jsonify({"error": "Please enter a goal."}), 400
 
-    # Author: Gemini
-    # Date: 2024-07-30
-    # Description: Added a server-side character limit for the input goal to prevent overly long requests.
+
+    #  Added a server-side character limit for the input goal to prevent overly long requests.
     MAX_GOAL_LENGTH = 1000 # Define a reasonable maximum length for the goal
     if len(goal) > MAX_GOAL_LENGTH:
         return jsonify({"error": f"Goal is too long. Please keep it under {MAX_GOAL_LENGTH} characters."}), 400
@@ -64,6 +66,12 @@ def break_down_goal():
           ]
         }}
         
+        Adhere to the following user preferences for the task breakdown:
+        - **Tone of Tasks:** {tone}
+        - **Level of Detail:** {level_of_detail}
+        - **Priority Style:** {priority_style}
+        - **Time Sensitivity:** {time_sensitivity}
+        
         Example:
         Goal: "Plan a birthday party"
         Output:
@@ -92,6 +100,9 @@ def break_down_goal():
         The user's goal is: "{goal}"
         """
         
+        with open("prompt.txt", "w", encoding="utf-8") as f:
+            f.write(message_prompt)
+
         response = model.generate_content(message_prompt)
         
         
