@@ -557,56 +557,111 @@
             copyToClipboardBtn.addEventListener('click', function() {
                 if (lastStructuredData) {
                     const textToCopy = formatStructuredDataAsText(lastStructuredData);
-                    navigator.clipboard.writeText(textToCopy).then(() => {
-                        const tempMessage = document.createElement('div');
-                        tempMessage.textContent = 'Text list copied to clipboard!';
-                        tempMessage.style.cssText = `
-                            position: fixed;
-                            top: 50%;
-                            left: 50%;
-                            transform: translate(-50%, -50%);
-                            background-color: var(--success-color);
-                            color: white;
-                            padding: 15px 30px;
-                            border-radius: 10px;
-                            font-size: 1.1em;
-                            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-                            z-index: 1000;
-                            transition: opacity 0.5s ease-in-out;
-                        `;
-                        document.body.appendChild(tempMessage);
-                        setTimeout(() => {
-                            tempMessage.style.opacity = '0';
-                            setTimeout(() => tempMessage.remove(), 500);
-                        }, 1500);
-                    }).catch(err => {
-                        console.error('Failed to copy text:', err);
-                        const tempMessage = document.createElement('div');
-                        tempMessage.textContent = 'Failed to copy text to clipboard.';
-                        tempMessage.style.cssText = `
-                            position: fixed;
-                            top: 50%;
-                            left: 50%;
-                            transform: translate(-50%, -50%);
-                            background-color: var(--error-color);
-                            color: white;
-                            padding: 15px 30px;
-                            border-radius: 10px;
-                            font-size: 1.1em;
-                            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-                            z-index: 1000;
-                            transition: opacity 0.5s ease-in-out;
-                        `;
-                        document.body.appendChild(tempMessage);
-                        setTimeout(() => {
-                            tempMessage.style.opacity = '0';
-                            setTimeout(() => tempMessage.remove(), 500);
-                        }, 1500);
-                    });
+
+                    // Author: Gemini
+                    // Date: 2024-07-30
+                    // Description: Implemented modern Clipboard API with a fallback for non-secure contexts.
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(textToCopy).then(() => {
+                            const tempMessage = document.createElement('div');
+                            tempMessage.textContent = 'Text list copied to clipboard!';
+                            tempMessage.style.cssText = `
+                                position: fixed;
+                                top: 50%;
+                                left: 50%;
+                                transform: translate(-50%, -50%);
+                                background-color: var(--success-color);
+                                color: white;
+                                padding: 15px 30px;
+                                border-radius: 10px;
+                                font-size: 1.1em;
+                                box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+                                z-index: 1000;
+                                transition: opacity 0.5s ease-in-out;
+                            `;
+                            document.body.appendChild(tempMessage);
+                            setTimeout(() => {
+                                tempMessage.style.opacity = '0';
+                                setTimeout(() => tempMessage.remove(), 500);
+                            }, 1500);
+                        }).catch(err => {
+                            console.error('Failed to copy using Clipboard API:', err);
+                            // Fallback to execCommand if Clipboard API fails (e.g., not secure context)
+                            fallbackCopyToClipboard(textToCopy);
+                        });
+                    } else {
+                        // Fallback for older browsers or non-secure contexts if Clipboard API is not available
+                        fallbackCopyToClipboard(textToCopy);
+                    }
                 } else {
                     alert('No goal breakdown available to copy.');
                 }
             });
+
+            // Author: Gemini
+            // Date: 2024-07-30
+            // Description: Fallback function for copying text to clipboard using document.execCommand.
+            function fallbackCopyToClipboard(text) {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed'; // Avoid scrolling to bottom
+                textarea.style.left = '-9999px'; // Move off-screen
+                document.body.appendChild(textarea);
+                textarea.focus();
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    const tempMessage = document.createElement('div');
+                    tempMessage.textContent = 'Text list copied to clipboard (fallback)!';
+                    tempMessage.style.cssText = `
+                        position: fixed;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        background-color: var(--success-color);
+                        color: white;
+                        padding: 15px 30px;
+                        border-radius: 10px;
+                        font-size: 1.1em;
+                        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+                        z-index: 1000;
+                        transition: opacity 0.5s ease-in-out;
+                    `;
+                    document.body.appendChild(tempMessage);
+                    setTimeout(() => {
+                        tempMessage.style.opacity = '0';
+                        setTimeout(() => tempMessage.remove(), 500);
+                    }, 1500);
+                } catch (err) {
+                    console.error('Failed to copy using fallback method:', err);
+                    const tempMessage = document.createElement('div');
+                    tempMessage.textContent = 'Failed to copy text to clipboard.';
+                    tempMessage.style.cssText = `
+                        position: fixed;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        background-color: var(--error-color);
+                        color: white;
+                        padding: 15px 30px;
+                        border-radius: 10px;
+                        font-size: 1.1em;
+                        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+                        z-index: 1000;
+                        transition: opacity 0.5s ease-in-out;
+                    `;
+                    document.body.appendChild(tempMessage);
+                    setTimeout(() => {
+                        tempMessage.style.opacity = '0';
+                        setTimeout(() => tempMessage.remove(), 500);
+                    }, 1500);
+                } finally {
+                    // Remove the textarea regardless of success or failure
+                    if (textarea.parentNode) {
+                        textarea.parentNode.removeChild(textarea);
+                    }
+                }
+            }
 
             function formatStructuredDataAsText(data) {
                 let text = `Goal: ${data.goal}\n\n`;
